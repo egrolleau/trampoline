@@ -87,7 +87,7 @@ twi_status(void)
  * interrupt time.
  */
 void
-twi_isr_C_function(void)
+twi_isr_C(void)
 {
   U32 status = *AT91C_TWI_SR & twi_mask;
   if (status & AT91C_TWI_RXRDY) {
