@@ -42,6 +42,7 @@ nxt_entry_point.s \
 interrupts.s #\
 ecrobot_init.s \
 irq.s \
+vectors.s \
 
 CFLAGS += -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/c \
 -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios \
