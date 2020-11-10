@@ -56,6 +56,8 @@ SOURCES += ecrobot_usb.c \
 ecrobot_interface.c \
 ecrobot_device_hook.c \
 ecrobot_bluetooth.c \
+colorsensor.c \
+NxtCam.c \
 ecrobot_base.c #\
 ecrobot.c 
 
