@@ -5,8 +5,6 @@
 @ there if needed.
 @
 
-
-
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @ Macros to do memory initialisation
@@ -51,11 +49,10 @@
 @ 0MB will be flash or RAM depending on the remap state.
 @
 start:
-        
 @ Disable interrupts (IRQ and FIQ). Should not have to do this, but lets not assume anything
-@	mrs  r0,cpsr
-@	orr  r0,r0,#0xc0
-@	msr  cpsr_all,r0
+	mrs  r0,cpsr
+	orr  r0,r0,#0xc0
+	msr  cpsr_all,r0
 
 @
 @ This patch resets the chip
@@ -82,26 +79,26 @@ start:
 @ If address 0 has changed, then RAM is already at 0, so there is
 @ no need to remap
 
-@	ldr  r0,=0x000000
-@	ldr  r2,=0x200000
-@	ldr  r3,[r0]
-@	ldr  r4,[r2]
-@	ldr  r5,=0xFFFFFFFF
-@	eor  r5,r4,r5
-@	str  r5,[r2]
-@	ldr  r5,[r0]
-@	str  r4,[r2]
+	ldr  r0,=0x000000
+	ldr  r2,=0x200000
+	ldr  r3,[r0]
+	ldr  r4,[r2]
+	ldr  r5,=0xFFFFFFFF
+	eor  r5,r4,r5
+	str  r5,[r2]
+	ldr  r5,[r0]
+	str  r4,[r2]
 
-@	cmp  r3,r5
-@	bne  skip_remap_toggle
+	cmp  r3,r5
+	bne  skip_remap_toggle
 
-@	ldr  r0,=0xFFFFFF00
-@	ldr  r1,=1
-@	str  r1,[r0]
+	ldr  r0,=0xFFFFFF00
+	ldr  r1,=1
+	str  r1,[r0]
 
-@skip_remap_toggle:
+skip_remap_toggle:
 
-@		b    continue_boot
+		b    continue_boot
 
 
 continue_boot:
@@ -112,18 +109,18 @@ continue_boot:
 @   No special flags
 @
 
-@	ldr r0,=0xFFFFFF60
-@	ldr r1,=((72 << 16) | (1 << 8))
-@	str r1,[r0]
+	ldr r0,=0xFFFFFF60
+	ldr r1,=((72 << 16) | (1 << 8))
+	str r1,[r0]
 
 @
 @    Disable watchdog
 @    Set MDT_MR disable bit. 
 @    Note: probably want to set this differently at some stage...
 @
-@	ldr r0,=0xFFFFFD44
-@	ldr r1,=0x00008000
-@	str r1,[r0]
+	ldr r0,=0xFFFFFD44
+	ldr r1,=0x00008000
+	str r1,[r0]
 
 @
 @    Set up PLL & clock source
@@ -134,76 +131,74 @@ continue_boot:
 
 @ Start main osc
 
-@	ldr r0,=0xFFFFFC20  @ PMC_MOR
-@	ldr r1,=0x00000601
-@	str r1,[r0]
+	ldr r0,=0xFFFFFC20  @ PMC_MOR
+	ldr r1,=0x00000601
+	str r1,[r0]
 
-@	ldr r0,=0xFFFFFC68  @ PMC_SR
-@wait_MOSCS:
-@	ldr r1,[r0]
-@	ands r1,r1,#1
-@	beq wait_MOSCS
+	ldr r0,=0xFFFFFC68  @ PMC_SR
+wait_MOSCS:
+	ldr r1,[r0]
+	ands r1,r1,#1
+	beq wait_MOSCS
 
 	@ set up PLL
-@	ldr r0,=0xFFFFFC2C  @ PMC_PLLR
-@	ldr r1,=0x00481C0E
-@	str r1,[r0]
+	ldr r0,=0xFFFFFC2C  @ PMC_PLLR
+	ldr r1,=0x00481C0E
+	str r1,[r0]
 
-@	ldr r0,=0xFFFFFC68  @ PMC_SR
-@wait_pll_lock:
-@	ldr r1,[r0]
-@	ands r1,r1,#4
-@	beq wait_pll_lock
+	ldr r0,=0xFFFFFC68  @ PMC_SR
+wait_pll_lock:
+	ldr r1,[r0]
+	ands r1,r1,#4
+	beq wait_pll_lock
 
-@	ldr r0,=0xFFFFFC68  @ PMC_SR
-@wait_MCLK_Ready0:
-@	ldr r1,[r0]
-@	ands r1,r1,#8
-@	beq  wait_MCLK_Ready0
+	ldr r0,=0xFFFFFC68  @ PMC_SR
+wait_MCLK_Ready0:
+	ldr r1,[r0]
+	ands r1,r1,#8
+	beq  wait_MCLK_Ready0
 
 @ Set up master clock to use clock div 2
-@	ldr r0,=0xFFFFFC30 @ PMC_MCKR
-@	ldr r1,=0x4
-@	str r1,[r0]
+	ldr r0,=0xFFFFFC30 @ PMC_MCKR
+	ldr r1,=0x4
+	str r1,[r0]
 
-@	ldr r0,=0xFFFFFC68  @ PMC_SR
-@wait_MCLK_Ready1:
-@	ldr r1,[r0]
-@	ands r1,r1,#8
-@	beq  wait_MCLK_Ready1
+	ldr r0,=0xFFFFFC68  @ PMC_SR
+wait_MCLK_Ready1:
+	ldr r1,[r0]
+	ands r1,r1,#8
+	beq  wait_MCLK_Ready1
 
 @ Set up master clock to use PLL clock div 2
-@	ldr r0,=0xFFFFFC30 @ PMC_MCKR
-@	ldr r1,=0x7
-@	str r1,[r0]
+	ldr r0,=0xFFFFFC30 @ PMC_MCKR
+	ldr r1,=0x7
+	str r1,[r0]
 
-@	ldr r0,=0xFFFFFC68  @ PMC_SR
-@wait_MCLK_Ready2:
-@	ldr r1,[r0]
-@	ands r1,r1,#8
-@	beq  wait_MCLK_Ready2
+	ldr r0,=0xFFFFFC68  @ PMC_SR
+wait_MCLK_Ready2:
+	ldr r1,[r0]
+	ands r1,r1,#8
+	beq  wait_MCLK_Ready2
 
 
 @
 @
 @ Copy the vector table
 @
-@vector_copy:
-@	mem_copy       __vectors_load_start__, __vectors_load_end__, __vectors_ram_start__
+vector_copy:
+	mem_copy       __vectors_load_start__, __vectors_load_end__, __vectors_ram_start__
 
 @
 @ Initialise memory regions
 @
-@data_copy:
-@	mem_copy       __data_load_start__, __data_load_end__, __data_ram_start__
-@ram_text_copy:
-@	mem_copy       __ramtext_load_start__, __ramtext_load_end__, __ramtext_ram_start__
-@bss_init:
-@	mem_initialise __bss_start__, __bss_end__, 0
-
-/*removed by fp */
-@stack_init_0:
-@	mem_initialise __stack_start__, __stack_end__, 0x6b617453 @ 'Stak'
+data_copy:
+	mem_copy       __data_load_start__, __data_load_end__, __data_ram_start__
+ram_text_copy:
+	mem_copy       __ramtext_load_start__, __ramtext_load_end__, __ramtext_ram_start__
+bss_init:
+	mem_initialise __bss_start__, __bss_end__, 0
+stack_init_0:
+	mem_initialise __stack_start__, __stack_end__, 0x6b617453 @ 'Stak'
 
 @
 @   Set up stacks etc.
@@ -212,55 +207,28 @@ continue_boot:
 @   NB Stacks should be 8-byte aligned for APCS
 @   They should already be aligned, but we mask the values to make sure.
 @
-@stack_init_1:
+stack_init_1:
 @ Set up Interrupt stack
-@                msr   CPSR_c,#0xD2 @ IRQ mode, IRQ, FIQ off
-@                ldr   r0, =__irq_stack__
-@                mov   sp,r0
-@		bic   sp,sp,#7    @ make sure it is 8-byte aligned
-
+                msr   CPSR_c,#0xD2 @ IRQ mode, IRQ, FIQ off
+                ldr   r0, =__irq_stack__
+                mov   sp,r0
+		bic   sp,sp,#7    @ make sure it is 8-byte aligned
 @
 @ Set up System stack
-@		msr   CPSR_c,#0xDF		@ System mode , I and F bits set (interrupts disabled)
-@		ldr   r3, =__system_stack__
-@		mov   sp, r3
-@		bic   sp,sp,#7    @ make sure it is 8-byte aligned
+		msr   CPSR_c,#0xDF		@ System mode , I and F bits set (interrupts disabled)
+		ldr   r3, =__system_stack__
+		mov   sp, r3
+		bic   sp,sp,#7    @ make sure it is 8-byte aligned
 
-  /* added by fp */
-  /* setup IRQ mode initial stack pointer */
-  msr cpsr_c, #(0b10010 | 0b10000000 | 0b01000000)
-    ldr sp, =irq_stack_bottom
-
-    /* setup FIQ mode initial stack pointer */
-  msr cpsr_c, #(0b10001 | 0b10000000 | 0b01000000)
-    ldr sp, =fiq_stack_bottom
-
-    /* setup service (syscall) mode initial stack pointer */
-  msr cpsr_c, #(0b10011 | 0b10000000 | 0b01000000)
-    ldr sp, =svc_stack_bottom
-
-  msr cpsr_c, #(0b10111 | 0b10000000 | 0b01000000)
-    ldr sp, =abt_stack_bottom
-
-  msr cpsr_c, #(0b11011 | 0b10000000 | 0b01000000)
-    ldr sp, =und_stack_bottom
-
-  /* setup user mode initial stack pointer */
-  msr cpsr_c, #(0b11111 | 0b10000000 | 0b01000000)
-    ldr sp, =usr_stack_bottom
-    
-    
 
 @ Set up initial frame pointers etc
-@		mov     a2, #0						@ Second arg: fill value
-@		mov	fp, a2							@ Null frame pointer
-@		mov	r7, a2							@ Null frame pointer for Thumb
+		mov     a2, #0						@ Second arg: fill value
+		mov	fp, a2							@ Null frame pointer
+		mov	r7, a2							@ Null frame pointer for Thumb
 
 @ Kick into main code using interworking
 
-    bl tpl_arm_initialize_board
-
-    ldr r5,=main
+	ldr r5,=main
 	mov lr,pc
 	bx  r5
 
@@ -282,18 +250,16 @@ swi_handler:
 prefetch_abort_handler:
 	b prefetch_abort_handler
 
-/*modified by fp*/
-	@.extern data_abort_pc
-	@.extern data_abort_C
+	.extern data_abort_pc
+	.extern data_abort_C
 
 data_abort_handler:
-	b data_abort_handler
-    @ldr r0,=data_abort_pc
-	@str lr,[r0]
-	@msr   CPSR_c,#0xDF		@ System mode , I and F bits set (interrupts disabled)
-	@ldr r0,=data_abort_C
-	@mov lr,pc
-	@bx  r0
+	ldr r0,=data_abort_pc
+	str lr,[r0]
+	msr   CPSR_c,#0xDF		@ System mode , I and F bits set (interrupts disabled)
+	ldr r0,=data_abort_C
+	mov lr,pc
+	bx  r0
 data_abort_C_returned:
 	b data_abort_C_returned
 reserved_handler:

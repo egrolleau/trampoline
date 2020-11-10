@@ -58,6 +58,10 @@ extern void (*__ctor_end)(void);
 extern void (*__dtor_begin[])(void);
 extern void (*__dtor_end)(void);
 
+#if defined(__arm__) && defined(__ARM_EABI__)
+int __cxa_finalize(void*);
+#endif
+
 /* declarations for splash screen BMP file */
 #ifdef NXT_JSP
 EXTERNAL_BMP_DATA(nxtjsp_splash);
@@ -106,11 +110,15 @@ void cpp_constructor(void)
  */
 void cpp_destructor(void)
 {
+#if defined(__arm__) && defined(__ARM_EABI__)
+    (*__cxa_finalize)(0);
+#else
     SINT i;
-
+    
     /* call all global object destructors */
     for (i=0;__dtor_begin[i] != __dtor_end;i++)
       (*__dtor_begin[i])();
+#endif
 }
 
 /*
@@ -129,14 +137,13 @@ SINT execution_mode(void)
  * display application splash screen which is designed in
  * ecrobot_splash.bmp file
  */
-/*
 void show_splash_screen(void)
 {
 	S32 row, column;
 	S32 index;
 	static U8 lcd[NXT_LCD_DEPTH*NXT_LCD_WIDTH];
 	
-	// convert bmp file data to an array data for LCD
+	/* convert bmp file data to an array data for LCD */
 #ifdef NXT_JSP
 	ecrobot_bmp2lcd(BMP_DATA_START(nxtjsp_splash), lcd, 100, 64);
 #else
@@ -158,7 +165,7 @@ void show_splash_screen(void)
 	
 	if (execution_mode() == EXECUTED_FROM_SRAM)
 	{
-		// flip back to the original data for re-start 
+		/* flip back to the original data for re-start */
 		for (column = 0; column < NXT_LCD_WIDTH; column++)
 		{
 			for (row = 0; row < NXT_LCD_DEPTH; row++)
@@ -170,12 +177,11 @@ void show_splash_screen(void)
 	}
 	systick_wait_ms(200);
 }
-*/
 
 /*
  * display application main screen
  */
-/*void show_main_screen(void)
+void show_main_screen(void)
 {
 	display_clear(0);
 	display_goto_xy(0, 5);
@@ -186,13 +192,13 @@ void show_splash_screen(void)
 	display_string("      EXIT      ");
 	display_update();
 }
-*/
+
 /*
  * display status bar in the main screen
  * 
  * clear: 1(clear status bar), 0(not clear status bar)
  */
-/*void display_status_bar(SINT clear)
+void display_status_bar(SINT clear)
 {
 	if (clear)
 	{
@@ -207,7 +213,7 @@ void show_splash_screen(void)
 	display_string(status_bar);
 	display_update();
 }
-*/
+
 void show_bd_addr(U8 *bd_addr)
 {
 	SINT i;
@@ -284,34 +290,83 @@ void check_NXT_buttons(void)
 	{
 		last_act_time = st;
 		ecrobot_poll_nxtstate();
+
+#ifndef NO_RUN_ENTER_STOP_EXIT
 		if (ecrobot_get_button_state() == STOP_PRESSED)
 		{
-			cpp_destructor();
-			ecrobot_device_terminate();
-			display_clear(0);
-			display_force_update();
-			systick_wait_ms(10);
-			nxt_lcd_power_down(); /* reset LCD hardware */
-			systick_wait_ms(10);
-
-			/* jump to the entry of application */
-#ifdef NXT_JSP
-			lejos_osek_stop();
-#else
-			start();
-#endif
+			restart_NXT();
 		}
 		else if (ecrobot_get_button_state() == EXIT_PRESSED)
 		{
-			cpp_destructor();
-			ecrobot_device_terminate();
-			display_clear(0);
-			display_force_update();
-			systick_wait_ms(10);
-			nxt_lcd_power_down(); /* reset LCD hardware */
-			systick_wait_ms(10);
-			nxt_avr_power_down(); /* send command to AVR to sleep ARM */
+			shutdown_NXT();
 		}
+#endif
+
+	}
+}
+
+
+/*
+ * Stop and re-start application
+ */
+void restart_NXT(void)
+{
+	cpp_destructor();
+	ecrobot_device_terminate();
+	display_clear(0);
+	display_force_update();
+	systick_wait_ms(10);
+	nxt_lcd_power_down(); /* reset LCD hardware */
+	systick_wait_ms(10);
+
+	/* jump to the entry of application */
+#ifdef NXT_JSP
+	lejos_osek_stop();
+
+#else
+	start();
+#endif
+}
+
+
+/*
+ * Shut down NXT
+ */
+void shutdown_NXT(void)
+{
+	cpp_destructor();
+	ecrobot_device_terminate();
+	display_clear(0);
+	display_force_update();
+	systick_wait_ms(10);
+	nxt_lcd_power_down(); /* reset LCD hardware */
+	systick_wait_ms(10);
+	
+	/* send command to AVR to sleep ARM */
+	nxt_avr_power_down();
+}
+
+
+/*
+ * Execute NXT BIOS
+ * Note that it works only when NXT BIOS is used. Otherwise, it does nothing.
+ * Note that NXT BIOS 1.0.4 or later is required.
+ */
+void exec_NXT_BIOS(void)
+{
+	if  (execution_mode() == EXECUTED_FROM_FLASH)
+	{
+		set_flash_request();
+
+		cpp_destructor();
+		ecrobot_device_terminate();
+		display_clear(0);
+		display_force_update();
+		systick_wait_ms(10);
+		nxt_lcd_power_down(); /* reset LCD hardware */
+		systick_wait_ms(10);
+		
+		JUMP_TO_NXT_BIOS
 	}
 }
 
