@@ -86,7 +86,8 @@ twi_status(void)
  * I/O state. This means that we do not have to test this state at
  * interrupt time.
  */
-void twi_isr_C_function(void)
+void
+twi_isr_C(void)
 {
   U32 status = *AT91C_TWI_SR & twi_mask;
   if (status & AT91C_TWI_RXRDY) {
@@ -170,8 +171,6 @@ twi_reset(void)
   twi_mask = 0;
 }
 
-extern void tpl_primary_irq_handler(void);
-
 /**
  * Initialize the device.
  */
@@ -185,7 +184,7 @@ twi_init(void)
   *AT91C_TWI_IDR = ~0;		/* Disable all interrupt sources */
   aic_mask_off(AT91C_ID_TWI);
   aic_set_vector(AT91C_ID_TWI, AIC_INT_LEVEL_ABOVE_NORMAL,
-		  (U32) tpl_primary_irq_handler);//(int)twi_isr_entry);
+		 (int)twi_isr_entry);
   aic_mask_on(AT91C_ID_TWI);
 
 

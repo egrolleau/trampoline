@@ -173,6 +173,8 @@ AT91_REG AIC_SMR[32];	// Source Mode Register
 } AT91S_SYS, *AT91PS_SYS;
 
 
+
+
 // *****************************************************************************
 //              SOFTWARE API DEFINITION  FOR Advanced Interrupt Controller
 // *****************************************************************************
@@ -199,6 +201,7 @@ AT91_REG AIC_SMR[32];	// Source Mode Register
   AT91_REG AIC_FFDR;		// Fast Forcing Disable Register
   AT91_REG AIC_FFSR;		// Fast Forcing Status Register
 } AT91S_AIC, *AT91PS_AIC;
+
 
 
 // -------- AIC_SMR : (AIC Offset: 0x0) Control Register --------
@@ -233,6 +236,7 @@ AT91_REG PDC_RPR;		// Receive Pointer Register
   AT91_REG PDC_PTCR;		// PDC Transfer Control Register
   AT91_REG PDC_PTSR;		// PDC Transfer Status Register
 } AT91S_PDC, *AT91PS_PDC;
+
 
 
 // -------- PDC_PTCR : (PDC Offset: 0x20) PDC Transfer Control Register --------
@@ -272,6 +276,7 @@ AT91_REG DBGU_CR;		// Control Register
   AT91_REG DBGU_PTCR;		// PDC Transfer Control Register
   AT91_REG DBGU_PTSR;		// PDC Transfer Status Register
 } AT91S_DBGU, *AT91PS_DBGU;
+
 
 
 // -------- DBGU_CR : (DBGU Offset: 0x0) Debug Unit Control Register --------
@@ -357,6 +362,8 @@ AT91_REG PIO_PER;		// PIO Enable Register
 } AT91S_PIO, *AT91PS_PIO;
 
 
+
+
 // *****************************************************************************
 //              SOFTWARE API DEFINITION  FOR Clock Generator Controler
 // *****************************************************************************
@@ -367,6 +374,7 @@ AT91_REG CKGR_MOR;		// Main Oscillator Register
   AT91_REG Reserved0[1];	//
   AT91_REG CKGR_PLLR;		// PLL Register
 } AT91S_CKGR, *AT91PS_CKGR;
+
 
 
 // -------- CKGR_MOR : (CKGR Offset: 0x0) Main Oscillator Register --------
@@ -420,6 +428,7 @@ AT91_REG PMC_SCER;		// System Clock Enable Register
 } AT91S_PMC, *AT91PS_PMC;
 
 
+
 // -------- PMC_SCER : (PMC Offset: 0x0) System Clock Enable Register --------
 #  define AT91C_PMC_PCK         ((unsigned int) 0x1 <<  0)	// (PMC) Processor Clock
 #  define AT91C_PMC_UDP         ((unsigned int) 0x1 <<  7)	// (PMC) USB Device Port Clock
@@ -467,6 +476,7 @@ AT91_REG RSTC_RCR;		// Reset Control Register
 } AT91S_RSTC, *AT91PS_RSTC;
 
 
+
 // -------- RSTC_RCR : (RSTC Offset: 0x0) Reset Control Register --------
 #  define AT91C_RSTC_PROCRST    ((unsigned int) 0x1 <<  0)	// (RSTC) Processor Reset
 #  define AT91C_RSTC_PERRST     ((unsigned int) 0x1 <<  2)	// (RSTC) Peripheral Reset
@@ -502,6 +512,7 @@ AT91_REG RTTC_RTMR;		// Real-time Mode Register
 } AT91S_RTTC, *AT91PS_RTTC;
 
 
+
 // -------- RTTC_RTMR : (RTTC Offset: 0x0) Real-time Mode Register --------
 #  define AT91C_RTTC_RTPRES     ((unsigned int) 0xFFFF <<  0)	// (RTTC) Real-time Timer Prescaler Value
 #  define AT91C_RTTC_ALMIEN     ((unsigned int) 0x1 << 16)	// (RTTC) Alarm Interrupt Enable
@@ -527,6 +538,7 @@ AT91_REG PITC_PIMR;		// Period Interval Mode Register
 } AT91S_PITC, *AT91PS_PITC;
 
 
+
 // -------- PITC_PIMR : (PITC Offset: 0x0) Periodic Interval Mode Register --------
 #  define AT91C_PITC_PIV        ((unsigned int) 0xFFFFF <<  0)	// (PITC) Periodic Interval Value
 #  define AT91C_PITC_PITEN      ((unsigned int) 0x1 << 24)	// (PITC) Periodic Interval Timer Enabled
@@ -547,6 +559,7 @@ AT91_REG WDTC_WDCR;		// Watchdog Control Register
   AT91_REG WDTC_WDMR;		// Watchdog Mode Register
   AT91_REG WDTC_WDSR;		// Watchdog Status Register
 } AT91S_WDTC, *AT91PS_WDTC;
+
 
 
 // -------- WDTC_WDCR : (WDTC Offset: 0x0) Periodic Interval Image Register --------
@@ -574,6 +587,7 @@ AT91_REG VREG_MR;		// Voltage Regulator Mode Register
 } AT91S_VREG, *AT91PS_VREG;
 
 
+
 // -------- VREG_MR : (VREG Offset: 0x0) Voltage Regulator Mode Register --------
 #  define AT91C_VREG_PSTDBY     ((unsigned int) 0x1 <<  0)	// (VREG) Voltage Regulator Power Standby Mode
   
@@ -590,6 +604,7 @@ AT91_REG MC_RCR;		// MC Remap Control Register
   AT91_REG MC_FCR;		// MC Flash Command Register
   AT91_REG MC_FSR;		// MC Flash Status Register
 } AT91S_MC, *AT91PS_MC;
+
 
 
 // -------- MC_RCR : (MC Offset: 0x0) MC Remap Control Register --------
@@ -688,6 +703,7 @@ AT91_REG SPI_CR;		// Control Register
 } AT91S_SPI, *AT91PS_SPI;
 
 
+
 // -------- SPI_CR : (SPI Offset: 0x0) SPI Control Register --------
 #  define AT91C_SPI_SPIEN       ((unsigned int) 0x1 <<  0)	// (SPI) SPI Enable
 #  define AT91C_SPI_SPIDIS      ((unsigned int) 0x1 <<  1)	// (SPI) SPI Disable
@@ -779,6 +795,7 @@ AT91_REG ADC_CR;		// ADC Control Register
   AT91_REG ADC_PTCR;		// PDC Transfer Control Register
   AT91_REG ADC_PTSR;		// PDC Transfer Status Register
 } AT91S_ADC, *AT91PS_ADC;
+
 
 
 // -------- ADC_CR : (ADC Offset: 0x0) ADC Control Register --------
@@ -888,6 +905,7 @@ AT91_REG SSC_CR;		// Control Register
 } AT91S_SSC, *AT91PS_SSC;
 
 
+
 // -------- SSC_CR : (SSC Offset: 0x0) SSC Control Register --------
 #  define AT91C_SSC_RXEN        ((unsigned int) 0x1 <<  0)	// (SSC) Receive Enable
 #  define AT91C_SSC_RXDIS       ((unsigned int) 0x1 <<  1)	// (SSC) Receive Disable
@@ -986,6 +1004,7 @@ AT91_REG US_CR;		// Control Register
 } AT91S_USART, *AT91PS_USART;
 
 
+
 // -------- US_CR : (USART Offset: 0x0) Debug Unit Control Register --------
 #  define AT91C_US_STTBRK       ((unsigned int) 0x1 <<  9)	// (USART) Start Break
 #  define AT91C_US_STPBRK       ((unsigned int) 0x1 << 10)	// (USART) Stop Break
@@ -1068,6 +1087,7 @@ AT91_REG TWI_CR;		// Control Register
 } AT91S_TWI, *AT91PS_TWI;
 
 
+
 // -------- TWI_CR : (TWI Offset: 0x0) TWI Control Register --------
 #  define AT91C_TWI_START       ((unsigned int) 0x1 <<  0)	// (TWI) Send a START Condition
 #  define AT91C_TWI_STOP        ((unsigned int) 0x1 <<  1)	// (TWI) Send a STOP Condition
@@ -1114,6 +1134,7 @@ AT91_REG TC_CCR;		// Channel Control Register
   AT91_REG TC_IDR;		// Interrupt Disable Register
   AT91_REG TC_IMR;		// Interrupt Mask Register
 } AT91S_TC, *AT91PS_TC;
+
 
 
 // -------- TC_CCR : (TC Offset: 0x0) TC Channel Control Register --------
@@ -1246,6 +1267,7 @@ AT91S_TC TCB_TC0;		// TC Channel 0
 } AT91S_TCB, *AT91PS_TCB;
 
 
+
 // -------- TCB_BCR : (TCB Offset: 0xc0) TC Block Control Register --------
 #  define AT91C_TCB_SYNC        ((unsigned int) 0x1 <<  0)	// (TCB) Synchro Command
 // -------- TCB_BMR : (TCB Offset: 0xc4) TC Block Mode Register --------
@@ -1277,6 +1299,7 @@ AT91_REG PWMC_CMR;		// Channel Mode Register
   AT91_REG PWMC_CUPDR;		// Channel Update Register
   AT91_REG PWMC_Reserved[3];	// Reserved
 } AT91S_PWMC_CH, *AT91PS_PWMC_CH;
+
 
 
 // -------- PWMC_CMR : (PWMC_CH Offset: 0x0) PWMC Channel Mode Register --------
@@ -1314,6 +1337,7 @@ AT91_REG PWMC_MR;		// PWMC Mode Register
   AT91_REG Reserved1[64];	//
   AT91S_PWMC_CH PWMC_CH[32];	// PWMC Channel 0
 } AT91S_PWMC, *AT91PS_PWMC;
+
 
 
 // -------- PWMC_MR : (PWMC Offset: 0x0) PWMC Mode Register --------
@@ -1361,6 +1385,7 @@ AT91_REG UDP_NUM;		// Frame Number Register
   AT91_REG Reserved3[1];	//
   AT91_REG UDP_TXVC;		// Transceiver Control Register
 } AT91S_UDP, *AT91PS_UDP;
+
 
 
 // -------- UDP_FRM_NUM : (UDP Offset: 0x0) USB Frame Number Register --------

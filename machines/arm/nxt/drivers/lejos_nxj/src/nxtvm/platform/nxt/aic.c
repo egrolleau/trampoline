@@ -24,13 +24,10 @@
  * ARM core has to handle. These are defined in irq.s, and just freeze
  * the board in an infinite loop.
  */
-/* modified by fp 100121
- extern void default_isr(void);
+extern void default_isr(void);
 extern void default_fiq(void);
 extern void spurious_isr(void);
-*/
-extern void tpl_primary_irq_handler(void);
-extern void tpl_primary_fiq_handler(void);
+
 
 /* Initialise the Advanced Interrupt Controller.
  *
@@ -70,13 +67,12 @@ aic_initialise(void)
   /* Set default handlers for all interrupt lines. */
   for (i = 0; i < 32; i++) {
     sysc->SYSC_AIC_SMR[i] = 0;
-    sysc->SYSC_AIC_SVR[i] = (U32) tpl_primary_irq_handler; //(U32) default_isr;
+    sysc->SYSC_AIC_SVR[i] = (U32) default_isr;
   }
-  //by fp 100521
-  sysc->SYSC_AIC_SMR[AT91C_PERIPHERAL_ID_FIQ] = 0;  
-  sysc->SYSC_AIC_SVR[AT91C_PERIPHERAL_ID_FIQ] =  (U32) tpl_primary_fiq_handler; //(U32) default_fiq;
-  sysc->SYSC_AIC_SPU =  (U32) tpl_primary_fiq_handler; //(U32) spurious_isr;
+  sysc->SYSC_AIC_SVR[AT91C_PERIPHERAL_ID_FIQ] = (U32) default_fiq;
+  sysc->SYSC_AIC_SPU = (U32) spurious_isr;
 }
+
 
 /* Register an interrupt service routine for an interrupt line.
  *

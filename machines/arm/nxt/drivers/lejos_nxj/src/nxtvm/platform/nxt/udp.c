@@ -679,7 +679,8 @@ udp_enumerate()
     //display_string("E2");
 }
 
-void udp_isr_C_function(void)
+void
+udp_isr_C(void)
 {
   /* Process interrupts. We mainly use these during the configuration and
    * enumeration stages.
@@ -763,8 +764,6 @@ udp_status()
   return ret;
 }
 
-extern void tpl_primary_irq_handler(void);
-
 void
 udp_enable(int reset)
 {
@@ -784,7 +783,7 @@ udp_enable(int reset)
   int i_state = interrupts_get_and_disable();
   aic_mask_off(AT91C_PERIPHERAL_ID_UDP);
   aic_set_vector(AT91C_PERIPHERAL_ID_UDP, AIC_INT_LEVEL_LOWEST,
-          (U32) tpl_primary_irq_handler);//(U32) udp_isr_entry);
+         (U32) udp_isr_entry);
   aic_mask_on(AT91C_PERIPHERAL_ID_UDP);
   *AT91C_UDP_IER = (AT91C_UDP_EPINT0 | AT91C_UDP_RXSUSP | AT91C_UDP_RXRSM);
   reset = reset || (configured & USB_NEEDRESET);

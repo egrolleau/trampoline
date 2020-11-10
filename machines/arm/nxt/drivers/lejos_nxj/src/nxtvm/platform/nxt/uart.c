@@ -190,12 +190,14 @@ uart_process_isr(U32 u)
 }
 
 
-void uart_isr_C_0_function(void)
+void
+uart_isr_C_0(void)
 {
   uart_process_isr(0);
 }
 
-void uart_isr_C_1_function(void)
+void
+uart_isr_C_1(void)
 {
   uart_process_isr(1);
 }
@@ -238,7 +240,6 @@ uart_CheckBreak(U32 u)
 }
 
 
-extern void tpl_primary_irq_handler(void);
 
 int
 uart_init(U32 u, U32 baudRate, U32 dataBits, U32 stopBits, char parity)
@@ -360,7 +361,7 @@ uart_init(U32 u, U32 baudRate, U32 dataBits, U32 stopBits, char parity)
 
 
   aic_mask_off(peripheral_id);
-  aic_set_vector(peripheral_id, AIC_INT_LEVEL_NORMAL,  (U32) tpl_primary_irq_handler);//isr);
+  aic_set_vector(peripheral_id, AIC_INT_LEVEL_NORMAL, isr);
   aic_mask_on(peripheral_id);
 
 
@@ -380,3 +381,38 @@ uart_close(U32 u)
 {
   /* Nothing */
 }
+
+
+
+
+int uart_us0_init_irq(void)
+{
+  int i_state;
+  U32 isr;
+
+  isr = (U32) uart_isr_entry_0;
+  i_state = interrupts_get_and_disable();
+
+  *AT91C_US0_IDR = 0xFFFFFFFF;
+
+  // Set up UART(0) interrupt
+  aic_mask_off(AT91C_PERIPHERAL_ID_US0);
+  aic_set_vector(AT91C_PERIPHERAL_ID_US0, AIC_INT_LEVEL_NORMAL, isr);
+  aic_mask_on(AT91C_PERIPHERAL_ID_US0);
+
+
+  //*AT91C_US0_IER = 1;		// Enable rx and tx interrupts. This should cause a bogus tx int
+
+  //if (i_state)
+    // interrupts_enable();
+
+  return i_state;
+
+}
+
+void uart_us0_interrupts_enable(void){
+	interrupts_enable();
+}
+
+
+

@@ -59,7 +59,8 @@ static void spi_set_mode(U8 m)
 }
 
 
-void spi_isr_C_function(void)
+void
+spi_isr_C(void)
 {
   if (page == 0)
   {
@@ -96,9 +97,8 @@ void spi_isr_C_function(void)
   data += 100;
 }
 
-extern void tpl_primary_irq_handler(void);
 
-void 
+void
 nxt_spi_init(void)
 {
   int i_state = interrupts_get_and_disable();
@@ -151,7 +151,7 @@ nxt_spi_init(void)
 
   /* Install the interrupt handler */
   aic_mask_off(AT91C_PERIPHERAL_ID_SPI);
-  aic_set_vector(AT91C_PERIPHERAL_ID_SPI, AIC_INT_LEVEL_NORMAL,  (U32) tpl_primary_irq_handler);//(U32)spi_isr_entry);
+  aic_set_vector(AT91C_PERIPHERAL_ID_SPI, AIC_INT_LEVEL_NORMAL, (U32)spi_isr_entry);
   aic_mask_on(AT91C_PERIPHERAL_ID_SPI);
   *AT91C_SPI_PTCR = AT91C_PDC_TXTEN;
 

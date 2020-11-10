@@ -161,7 +161,8 @@ static U32 i2c_int_count;
 
 extern void i2c_timer_isr_entry(void);
 
-void i2c_timer_isr_C_function(void)
+void
+i2c_timer_isr_C(void)
 {
   int i;
 
@@ -426,8 +427,6 @@ i2c_enable(int port)
   }
 }
 
-extern void tpl_primary_irq_handler(void);
-
 // Initialise the module
 void
 i2c_init(void)
@@ -461,7 +460,7 @@ i2c_init(void)
   *AT91C_TC0_CCR = 1; /* Enable */
 
   aic_mask_off(AT91C_ID_TC0);
-  aic_set_vector(AT91C_ID_TC0, AIC_INT_LEVEL_NORMAL,  (U32) tpl_primary_irq_handler);//i2c_timer_isr_entry);
+  aic_set_vector(AT91C_ID_TC0, AIC_INT_LEVEL_NORMAL, i2c_timer_isr_entry);
   aic_mask_on(AT91C_ID_TC0);
   
   *AT91C_TC0_CCR = 0x04; /* Software trigger */

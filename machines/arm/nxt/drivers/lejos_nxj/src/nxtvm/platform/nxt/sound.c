@@ -79,6 +79,10 @@ struct {
   volatile U32 clock_div;
   // Size of the sample
   volatile U32 len;
+  // Callback of the stream end
+  U8 (*callback)(void);
+  // Clock divisor to use to play the stream
+  volatile U32 stream_clock_div;
 } sample;
 
 /* The following tables provide input to the wave generation code. This
@@ -138,7 +142,7 @@ const U32 silence[16] = {
 //const U8 logvol[] = {0, 8, 24, 40, 56, 80, 104, 128, 160, 208, 255, 255};
 const U8 logvol[] = {0, 8, 24, 40, 56, 80, 104, 128, 162, 196, 255, 255};
 
-extern void tpl_primary_irq_handler(void);
+
 
 void sound_init()
 {
@@ -164,7 +168,7 @@ void sound_init()
   aic_mask_on(AT91C_ID_SSC);
   aic_clear(AT91C_ID_SSC);
   aic_set_vector(AT91C_ID_SSC, AT91C_AIC_PRIOR_LOWEST | AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED,
-		  (U32) tpl_primary_irq_handler);//(U32)sound_isr_entry); /*PG*/
+		 (U32)sound_isr_entry); /*PG*/
   sample.buf_id = 0;
   sample.cur_vol = -1;
 }
@@ -294,6 +298,7 @@ void sound_freq_vol(U32 freq, U32 ms, int vol)
   sample.len = len;
   sample.ptr = (U8 *)sample.buf[buf];
   sample.buf_id = buf;
+  sample.callback = NULL;
   *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
   sound_mode = SOUND_MODE_TONE;
   sound_interrupt_enable(AT91C_SSC_TXBUFE);
@@ -377,9 +382,66 @@ void sound_play_sample(U8 *data, U32 length, U32 freq, int vol)
   sample.ptr = data;
   sample.len = PDM_BUFFER_LENGTH;
   sample.clock_div = cdiv;
+  sample.callback = NULL;
   // re-enable and wait for the current sample to complete
   sound_interrupt_enable(AT91C_SSC_TXBUFE);
   *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
+}
+
+void sound_play_stream_setup(U32 freq, int vol)
+{
+  // Calculate the clock divisor based upon the recorded sample frequency */
+  if (freq == 0) freq = DEFRATE;
+  if (freq > MAXRATE) freq = MAXRATE;
+  if (freq < MINRATE) freq = MINRATE;
+  U32 cdiv = (OSC/(2*SAMPBITS) + freq/2)/freq;
+  set_vol(vol);
+  // Turn off ints while we update shared values
+  sound_disable();
+  sound_interrupt_disable();
+  sound_mode = SOUND_MODE_SILENCE;
+  sample.clock_div = SILENCE_CLK;
+  sample.stream_clock_div = cdiv;
+  sample.ptr = (U8 *)silence;
+  sample.count = SILENCE_CNT;
+  sample.len = 16;
+}
+
+void sound_play_stream(U8 *data, U32 length, U8 (*callback)())
+{
+  if (data == (U8 *) 0 || length == 0) return;
+  // Turn off ints while we update shared values
+  sound_interrupt_disable();
+  sound_mode = SOUND_MODE_PCM;
+  sample.count = length;
+  sample.ptr = data;
+  sample.len = PDM_BUFFER_LENGTH;
+  sample.clock_div = sample.stream_clock_div;
+  sample.callback = callback;
+  // re-enable and wait for the current sample to complete
+  sound_interrupt_enable(AT91C_SSC_TXBUFE);
+  *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
+}
+
+void sound_play_stream_next(U8 *data, U32 length)
+{
+  if (data == (U8 *) 0 || length == 0) return;
+  // Turn off ints while we update shared values
+  sound_mode = SOUND_MODE_PCM;
+  sample.count = length;
+  sample.ptr = data;
+  sample.len = PDM_BUFFER_LENGTH;
+  sample.clock_div = sample.stream_clock_div;
+}
+
+U8 sound_get_play_status()
+{
+  if (sound_mode <= SOUND_MODE_SILENCE)
+    return 0;
+  else if (sound_mode != SOUND_MODE_PCM)
+    return 2;
+  else
+    return 1;
 }
 
 int sound_get_time()
@@ -397,7 +459,7 @@ int sound_get_time()
     return 0;
 }
 
-void sound_isr_C_function(void)
+void sound_isr_C()
 {
     if (sample.count > 0)
     {
@@ -410,21 +472,39 @@ void sound_isr_C_function(void)
         {
           sound_fill_sample_buffer();
           *AT91C_SSC_TPR = (unsigned int)sample.buf[sample.buf_id];
+          if (sample.count <= 0 && sample.callback != NULL)
+          {
+            if ((*sample.callback)() == 0)
+            {
+              sample.callback = NULL;
+            }
+          }
         }
         else
+        {
           *AT91C_SSC_TPR = (unsigned int)sample.ptr;
+          sample.count--;
+        }
         *AT91C_SSC_TCR = sample.len;
-        sample.count--;
       }
       if (sound_mode == SOUND_MODE_PCM)
       {
         sound_fill_sample_buffer();
         *AT91C_SSC_TNPR = (unsigned int)sample.buf[sample.buf_id];
+        if (sample.count <= 0 && sample.callback != NULL)
+        {
+          if ((*sample.callback)() == 0)
+          {
+            sample.callback = NULL;
+          }
+        }
       }
       else
+      {
         *AT91C_SSC_TNPR = (unsigned int)sample.ptr;
+        sample.count--;
+      }
       *AT91C_SSC_TNCR = sample.len;
-      sample.count--;
       // If this is the last sample wait for it to complete, otherwise wait
       // to switch buffers
       sound_interrupt_enable(sample.count <= 0 ? (sound_mode == SOUND_MODE_SILENCE ? AT91C_SSC_TXEMPTY : AT91C_SSC_TXBUFE) : AT91C_SSC_ENDTX);
@@ -443,6 +523,6 @@ void sound_isr_C_function(void)
       sample.ptr = (U8 *)silence;
       sample.count = SILENCE_CNT;
       sample.len = 16;
-      sound_isr_C_function();
+      sound_isr_C();
     }
 }

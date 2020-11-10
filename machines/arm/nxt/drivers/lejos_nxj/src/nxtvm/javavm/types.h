@@ -1,7 +1,7 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
-#include "drivers/lejos_nxj/src/nxtvm/platform/nxt/platform_config.h"
+#include "platform_config.h"
 
 typedef byte boolean;
 

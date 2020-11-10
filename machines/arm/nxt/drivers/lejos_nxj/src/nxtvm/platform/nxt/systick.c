@@ -28,7 +28,8 @@ extern void systick_isr_entry(void);
 extern void systick_low_priority_entry(void);
 
 // Systick low priority
-void systick_low_priority_C_function(void)
+void
+systick_low_priority_C(void)
 {
   *AT91C_AIC_ICCR = (1 << LOW_PRIORITY_IRQ);
   nxt_avr_1kHz_update();
@@ -36,7 +37,8 @@ void systick_low_priority_C_function(void)
 }
 
 // Called at 1000Hz
-void systick_isr_C_function(void)
+void
+systick_isr_C(void)
 {
   U32 status;
 
@@ -78,34 +80,26 @@ systick_wait_ns(U32 ns)
   }
 }
 
-extern void tpl_primary_irq_handler(void);
 
 void
 systick_init(void)
 {
   int i_state = interrupts_get_and_disable();
-    
-    
+
   aic_mask_off(LOW_PRIORITY_IRQ);
   aic_set_vector(LOW_PRIORITY_IRQ, (1 << 5) /* positive internal edge */ |
-		 AIC_INT_LEVEL_LOW, (U32) tpl_primary_irq_handler);// (U32) systick_low_priority_entry);
+		 AIC_INT_LEVEL_LOW, (U32) systick_low_priority_entry);
   aic_mask_on(LOW_PRIORITY_IRQ);
 
   aic_mask_off(AT91C_PERIPHERAL_ID_SYSIRQ);
   aic_set_vector(AT91C_PERIPHERAL_ID_SYSIRQ, (1 << 5) /* positive internal edge */ |
-         AIC_INT_LEVEL_NORMAL, (U32) tpl_primary_irq_handler);//(U32) systick_isr_entry);
+		 AIC_INT_LEVEL_NORMAL, (U32) systick_isr_entry);
 
   aic_mask_on(AT91C_PERIPHERAL_ID_SYSIRQ);
   *AT91C_PITC_PIMR = ((CLOCK_FREQUENCY / 16 / PIT_FREQ) - 1) | 0x03000000;	/* Enable, enable interrupts */
-    
 
-    
-
-    
   if (i_state)
     interrupts_enable();
-
-    
 }
 
 

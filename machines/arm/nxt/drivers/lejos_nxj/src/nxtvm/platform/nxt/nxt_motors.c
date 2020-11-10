@@ -108,7 +108,8 @@ nxt_motor_quad_decode(struct motor_struct *m, U32 value)
 
 extern void nxt_motor_isr_entry(void);
 
-void nxt_motor_isr_C_function(void)
+void
+nxt_motor_isr_C(void)
 {
   U32 i_state = interrupts_get_and_disable();
 
@@ -141,7 +142,7 @@ void nxt_motor_isr_C_function(void)
 
 }
 
-extern void tpl_primary_irq_handler(void);
+
 
 void
 nxt_motor_init(void)
@@ -156,7 +157,7 @@ nxt_motor_init(void)
   /* Enable ISR */
   aic_mask_off(AT91C_PERIPHERAL_ID_PIOA);
   aic_set_vector(AT91C_PERIPHERAL_ID_PIOA, AIC_INT_LEVEL_NORMAL,
-		  (U32) tpl_primary_irq_handler);//(U32) nxt_motor_isr_entry);
+		 (U32) nxt_motor_isr_entry);
   aic_mask_on(AT91C_PERIPHERAL_ID_PIOA);
 
   *AT91C_PIOA_IER = MOTOR_INTERRUPT_PINS;
