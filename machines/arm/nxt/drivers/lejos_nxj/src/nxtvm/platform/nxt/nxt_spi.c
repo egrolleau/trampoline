@@ -60,7 +60,7 @@ static void spi_set_mode(U8 m)
 
 
 void
-spi_isr_C(void)
+spi_isr_C_function(void)
 {
   if (page == 0)
   {
