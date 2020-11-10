@@ -113,6 +113,22 @@ static int set_bios_version(void)
 }
 
 /*
+ * calculate check sum of a data block
+ *
+ */
+static U32 calc_check_sum(U8* data, U32 len)
+{
+	U32 sum;
+
+	sum = 0;
+	for(int i = 0; i < len; i++)
+	{
+		sum += (U32)data[i];
+	}
+	return sum;
+}
+
+/*
  * check BIOS version record to judge the new version is
  * same as remaining version record.
  *
@@ -179,129 +195,179 @@ int clear_flash_request(void)
 /*
  * flash loader to upload an application
  */
-void flash_loader(void)
+int flash_loader(void)
 {
 	#define EXIT_BUTTON 0x08
+	#define EXIT_CNT_LIMIT 1000 /* msec */
 
 	U8 data[FLASH_PAGE_SIZE];
-	int len;
-	int i;
-	int current_data;
-	int data_end;
-	int page;
+	U8 appflash_status;
+	volatile int len;
+	volatile int data_offset;
+	volatile int received_data_blocks;
+	volatile int total_data_blocks;
+	volatile int flash_page_num;
+	U32 exit_cnt;
+
+	display_bios_status(UPLOAD_IDLE, 0);
 
 	ecrobot_init_usb();
 	ecrobot_set_name_usb((U8 *)VERSION); /* this will be checked in appflash */
 
-	i = 0;
-	page = 0;
-	current_data = 0;
-	data_end = -1;
+	exit_cnt = 0;
+	total_data_blocks = -1;
+	appflash_status = ON_PROGRESS;
 	while(1)
 	{
 		ecrobot_process1ms_usb();
 		systick_wait_ms(1);
 
-		len = ecrobot_read_usb(&data[i], 0, DATA_LENGTH);
-		if (len == 2 && data_end == -1)
+		len = ecrobot_read_usb(&data[data_offset], 0, DATA_LENGTH); /* receive a 64bytes data block */
+
+        /*
+         * The flash sequence is performed as the following way:
+         * 1. If two bytes data was received, it contains total number of 64bytes data blocks to be flashed.
+         * 2. AT91SAM7S flash controller performs every 256 bytes (called a page), so the flash loader accumurates recived data until
+         * received data reached to 256bytes (= a flash page) or reached to the last data block to be received.
+         */
+		if (total_data_blocks == -1 && len == 2 && appflash_status == ON_PROGRESS)
 		{
-			/* initialize flash loader */
-			i = 0;
-			page = 0;
-			current_data = 0;
-			data_end = *((unsigned short *)&data[i]);
-			memset(data, 0, FLASH_PAGE_SIZE);
-			display_bios_status(0, data_end*DATA_LENGTH);
+			/* get total number of 64bytes data blocks to be received and initialize flash loader */
+			total_data_blocks = *((unsigned short *)&data[0]);
+			memset(data, 0, FLASH_PAGE_SIZE); /* clear the buffer */
+			received_data_blocks = 0;
+			data_offset = 0;
+			flash_page_num = 0;
+			display_bios_status(1, 0); /* upload begins */
+			continue;
 		}
-		else if (len == DATA_LENGTH && data_end != -1)
+		
+		
+		if (total_data_blocks != -1 && len == DATA_LENGTH && appflash_status == ON_PROGRESS) /* perform application flash */
 		{
-			/* echo back to PC to check data corruption */
-			ecrobot_send_usb(&data[i], 0, DATA_LENGTH);
-			i += DATA_LENGTH;
-			current_data++;
-			display_bios_status(current_data, data_end);
+			/* send back check sum of received data block */
+			U32 sum = calc_check_sum(&data[data_offset], DATA_LENGTH);
+			ecrobot_send_usb((U8*)&sum, 0, 4); 
+			systick_wait_ms(1);
 
-			/* flash one page */
-			if (i >= FLASH_PAGE_SIZE)
+			/* accumurate received data until reaching to flash page size */
+			data_offset += DATA_LENGTH;
+            received_data_blocks++;
+			if (data_offset >= FLASH_PAGE_SIZE)
 			{
-				flash_write_page(FLASH_START_PAGE, (U32 *)data, page);
-				if (!verify_flash_page(FLASH_START_PAGE, data, page))
+				/* accumurated data blocks reached to 256bytes */
+				flash_write_page(FLASH_START_PAGE, (U32 *)data, flash_page_num); /* flash one page */
+				if (verify_flash_page(FLASH_START_PAGE, data, flash_page_num))
 				{
-					display_bios_status(UPLOAD_FAILED, 0);
-					i = 0;
-					data_end = -1;
-					continue;
-				}
-				memset(data, 0, FLASH_PAGE_SIZE);
-				i = 0;
-				page++;
-			}
-
-			/* final procedure for flash */
-			if (current_data == data_end)
-			{
-				if (data_end % (FLASH_PAGE_SIZE/DATA_LENGTH))
-				{
-					/* requires an additional page to flash the last data */
-					flash_write_page(FLASH_START_PAGE, (U32 *)data, page);
-					if (!verify_flash_page(FLASH_START_PAGE, data, page))
-					{
-						display_bios_status(UPLOAD_FAILED, 0);
-						i = 0;
-						data_end = -1;
-						continue;
-					}
-				}
-				
-				if (!set_bios_version())
-				{
-					display_bios_status(UPLOAD_FAILED, 0);
+					memset(data, 0, FLASH_PAGE_SIZE); /* clear the data buffer */
+					data_offset = 0;
+					flash_page_num++;
 				}
 				else
 				{
-					/* flash was succeeded */
-					display_bios_status(UPLOAD_FINISHED, 0);
+					/* failed to flash, so cancel flash procedure */
+					appflash_status = FAILED;
+					total_data_blocks = -1;
+					display_bios_status(UPLOAD_FAILED, 0);
 				}
-				i = 0;
-				data_end = -1;
+			}
+
+			if (appflash_status == ON_PROGRESS && received_data_blocks >= total_data_blocks)
+			{
+				/* received data blocks reached to the last data blocks to be received */
+				
+				if (total_data_blocks % (FLASH_PAGE_SIZE/DATA_LENGTH))
+				{
+					/* if there was reminded data to be flashed, it would require one additional flash page */
+					flash_write_page(FLASH_START_PAGE, (U32 *)data, flash_page_num);
+					if (!verify_flash_page(FLASH_START_PAGE, data, flash_page_num))
+					{
+						/* failed to flash, so cancel flash procedure */
+						appflash_status = FAILED;
+						display_bios_status(UPLOAD_FAILED, 0);
+					}
+				}
+				
+				if (appflash_status == ON_PROGRESS)
+				{
+					if (!set_bios_version())
+					{
+						appflash_status = FAILED;
+						display_bios_status(UPLOAD_FAILED, 0);
+					}
+					else
+					{
+						/* flash was finally succeeded */
+						display_bios_status(UPLOAD_FINISHED, 0);
+						
+						/* execute uploaded application */ 
+//						exec_app();
+						// Comment out exec_app to prevent unexpected freeze of NXT (12/20/2012 takashic)
+						
+					}
+				}
+				total_data_blocks = -1; /* terminate flash procedure */
+			}
+		}
+
+		if (buttons_get() == EXIT_BUTTON)
+		{
+			if (++exit_cnt >= EXIT_CNT_LIMIT || total_data_blocks == -1)
+			{
+				if (appflash_status == ON_PROGRESS && total_data_blocks == -1)
+				{
+					terminate_flash(); /* turn off the NXT */
+				}
+				return 0; /* flash procedure was failed */
 			}
 		}
 		else
 		{
-			display_bios_status(UPLOAD_IDLE, 0);
-		}
-
-		if (buttons_get() == EXIT_BUTTON && data_end == -1)
-		{
-			/* shut down the NXT */
-			ecrobot_term_usb();
-			display_clear(1);
-			systick_wait_ms(10);
-			nxt_lcd_power_down(); /* reset LCD hardware */
-			systick_wait_ms(20);
-			while(1)
-			{
-				nxt_avr_power_down();
-			}
+			exit_cnt = 0;
 		}
 	}
+	return 1; /* never reached here */
 }
+
+void terminate_flash(void)
+{
+	ecrobot_term_usb();
+	display_clear(1);
+	systick_wait_ms(10);
+	nxt_lcd_power_down(); /* reset LCD hardware */
+	systick_wait_ms(20);
+	
+	while(1)
+	{
+		nxt_avr_power_down();
+	}
+}
+
+void exec_app(void)
+{
+	ecrobot_term_usb();
+	display_clear(1);
+	systick_wait_ms(10);
+	nxt_lcd_power_down(); /* reset LCD hardware */
+	systick_wait_ms(20);
+	
+	JUMP_TO_APPLICATION
+}
+
 
 void nxt_device_init(void)
 {
 	aic_initialise();
-  interrupts_enable();
-  nxt_avr_init();
+	interrupts_enable();
+	nxt_avr_init();
 	systick_init();
-  i2c_init();
+	i2c_init();
 	nxt_motor_init();
-	//sound_init();
+	sound_init();
 	bt_init();
 	systick_wait_ms(1000); /* wait for LCD to stabilize */
-	display_init(); //need systick_wait_ms()
+	display_init();
 	init_sensors();
-    
-    
 }
 
 

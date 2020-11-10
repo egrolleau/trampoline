@@ -107,8 +107,7 @@ void display_bios_status(int data, int max_data)
 		if (data >= UPLOAD_IN_PROGRESS)
 		{
 			display_goto_xy(0, 3);
-			display_string("UPLOAD: PROGRESS");
-			display_progress_bar(4, data, max_data);
+			display_string("UPLOADING...    ");
 		}
 		else if (data == UPLOAD_FAILED)
 		{

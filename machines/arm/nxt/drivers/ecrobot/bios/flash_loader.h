@@ -46,16 +46,25 @@
 #define UPLOAD_FAILED             -2
 #define UPLOAD_IDLE               -3
 
+/* Application flash status */
+#define ON_PROGRESS        		  1
+#define FAILED                    0
+
 #define FLASH_REQUEST             "Jumpin' Jack Flash"
 
 #define	JUMP_TO_APPLICATION		  asm("ldr r5,=0x108000\n"); \
+								  asm("bx r5\n");
+							
+#define JUMP_TO_NXT_BIOS          asm("ldr r5,=0x100000\n"); \
 								  asm("bx r5\n");
 
 extern int is_bios_version_equal(void);
 extern int set_flash_request(void);
 extern int clear_flash_request(void);
 extern int has_flash_request(void);
-extern void flash_loader(void);
+extern int flash_loader(void);
+extern void terminate_flash(void);
+extern void exec_app(void);
 
 extern void nxt_device_init(void);
 #endif
