@@ -20,9 +20,6 @@ extern void show_bd_addr(U8 *bdaddr);
 extern void show_bd_addr_err(void);
 extern void add_status_info(SINT status);
 extern void check_NXT_buttons(void);
-extern void restart_NXT(void);
-extern void shutdown_NXT(void);
-extern void exec_NXT_BIOS(void);
 /* system boot strap in init.s */
 extern void start(void);
 

@@ -49,10 +49,7 @@
 #include "ecrobot_private.h"
 #include "ecrobot_interface.h"
 
-#include "colorsensor.h"
-
-
-static volatile U8 deviceStatus = DEVICE_NO_INIT;
+static U8 deviceStatus = DEVICE_NO_INIT;
 
 
 /*==============================================================================
@@ -340,202 +337,6 @@ void ecrobot_term_sonar_sensor(U8 port_id)
 	i2c_disable(port_id);
 }
 
-/*==============================================================================
- * NXT Color Sensor API
- *=============================================================================*/
-#define NUM_OF_SENSOR_DATA (4)
-
-const U8 NXT_COLORSENSOR_PROTOCOLS[NUM_OF_NXT_COLORSENSOR_MODES] =
-{
-	COLORSENSOR,
-	LIGHTSENSOR_RED,
-	LIGHTSENSOR_GREEN,
-	LIGHTSENSOR_BLUE,
-	COLORSENSOR,
-	LIGHTSENSOR_NONE,
-	LIGHTSENSOR_NONE
-};
-
-typedef struct
-{
-	U16 color;
-	S16 rgb[3];
-	U16 light;
-	volatile U8 mode;
-	volatile U8 mode_state;
-	volatile U8 port_in_use;
-} NXTCOLORSENSOR_T;
-
-static NXTCOLORSENSOR_T sensor_data[NUM_OF_SENSOR_DATA];
-
-/**
- * Background process to communicate with NXT Color Sensor data
- * @param -
- * @return -
- */
-void ecrobot_process_bg_nxtcolorsensor(void)
-{
-	for (int port_id = 0; port_id < NUM_OF_SENSOR_DATA; port_id++)
-	{
-		NXTCOLORSENSOR_T* sd = &(sensor_data[port_id]);
-		if (sd->port_in_use)
-		{
-			U8 mode = sd->mode; // copy the sensor mode in atomic manner to keep data consistency
-			if (mode == NXT_COLORSENSOR_DEACTIVATE)
-			{
-				sd->port_in_use = 0;
-				colorsensor_init(port_id, LIGHTSENSOR_NONE); // turn off all LEDs
-				return;
-			}
-			else if (mode != sd->mode_state)
-			{
-				sd->color = NXT_COLOR_UNKNOWN;
-				sd->rgb[0] = 0;
-				sd->rgb[1] = 0;
-				sd->rgb[2] = 0;
-				sd->light = 0;
-				sd->mode_state = mode;
-				colorsensor_init(port_id, LIGHTSENSOR_NONE); // it seems to need to turn off all LEDs to switch a different mode
-				colorsensor_init(port_id, NXT_COLORSENSOR_PROTOCOLS[mode]);
-			}
-
-			if (mode == NXT_COLORSENSOR)
-			{
-				sd->color = colorsensor_color_get(port_id);
-				colorsensor_rgb_get(port_id, sd->rgb);
-			}
-			else
-			{
-				sd->light = colorsensor_light_get(port_id);
-				if (mode == NXT_LIGHTSENSOR_WHITE)
-				{
-					colorsensor_light_full(port_id); // turn on all LEDs for white lamp
-				}
-			}
-		}
-	}
-}
-
-/**
- * initializes NXT Color Sensor
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @param mode: NXT_COLORSENSOR/NXT_LIGHTSENSOR_RED/NXT_LIGHTSENSOR_GREEN/NXT_LIGHTSENSOR_BLUE/NXT_LIGHTSENSOR_WHITE/NXT_LIGHTSENSOR_NONE/NXT_COLORSENSOR_DEACTIVATE
- */
-void ecrobot_init_nxtcolorsensor(U8 port_id, U8 mode)
-{
-	if (deviceStatus == DEVICE_NO_INIT)
-	{
-		ecrobot_set_nxtcolorsensor(port_id, NXT_COLORSENSOR_DEACTIVATE);
-		ecrobot_set_nxtcolorsensor(port_id, mode);
-	}
-}
-
-/**
- * sets sensor mode of NXT Color Sensor
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @param mode: NXT_COLORSENSOR/NXT_LIGHTSENSOR_RED/NXT_LIGHTSENSOR_GREEN/NXT_LIGHTSENSOR_BLUE/NXT_LIGHTSENSOR_WHITE/NXT_LIGHTSENSOR_NONE/NXT_COLORSENSOR_DEACTIVATE
- */
-void ecrobot_set_nxtcolorsensor(U8 port_id, U8 mode)
-{
-	if (mode == NXT_COLORSENSOR_DEACTIVATE)
-	{
-		sensor_data[port_id].color = NXT_COLOR_UNKNOWN;
-		sensor_data[port_id].rgb[0] = 0;
-		sensor_data[port_id].rgb[1] = 0;
-		sensor_data[port_id].rgb[2] = 0;
-		sensor_data[port_id].light = 0;
-		sensor_data[port_id].mode_state = mode;
-	}
-	sensor_data[port_id].mode = mode;
-	sensor_data[port_id].port_in_use = 1;
-}
-
-/**
- * gets sensor mode of NXT Color Sensor
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @return NXT_COLORSENSOR/NXT_LIGHTSENSOR_RED/NXT_LIGHTSENSOR_GREEN/NXT_LIGHTSENSOR_BLUE/NXT_LIGHTSENSOR_WHITE/NXT_LIGHTSENSOR_NONE/NXT_COLORSENSOR_DEACTIVATE
- */
-U8 ecrobot_get_nxtcolorsensor_mode(U8 port_id)
-{
-	return sensor_data[port_id].mode;
-}
-
-/**
- * gets light sensor data
- * Note that this API is valid for only when one of NXT_LIGHTSENSOR_RED/GREEN/BLUE/WHITE/OFF is configured as the sensor mode.
- * Otherwise, some chunk data is returned
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @return 0-1023 raw light sensor data
- */
-U16 ecrobot_get_nxtcolorsensor_light(U8 port_id)
-{
-	return sensor_data[port_id].light;
-}
-
-/**
- * gets color sensor data by ID
- * Note that this API is valid for only when COLORSENSOR is configured as the sensor mode. 
- * Otherwise, some chunk data is returned
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @return NXT_COLOR_BLACK/NXT_COLOR_BLUE/NXT_COLOR_GREEN/NXT_COLOR_YELLOW/NXT_COLOR_ORANGE/NXT_COLOR_RED/NXT_COLOR_WHITE/NXT_COLOR_UNKNOWN
- */
-U16 ecrobot_get_nxtcolorsensor_id(U8 port_id)
-{
-	U16 color = NXT_COLOR_UNKNOWN;
-	switch (sensor_data[port_id].color)
-	{
-		case BLACK:
-			color = NXT_COLOR_BLACK;
-			break;
-		case LIGHT_BLUE:
-		case DARK_BLUE:
-			color = NXT_COLOR_BLUE;
-			break;
-		case GREEN:
-			color = NXT_COLOR_GREEN;
-			break;
-		case YELLOW:
-			color = NXT_COLOR_YELLOW;
-			break;
-		case ORANGE:
-			color = NXT_COLOR_ORANGE;
-			break;
-		case RED:
-			color = NXT_COLOR_RED;
-			break;
-		case WHITE:
-			color = NXT_COLOR_WHITE;
-			break;
-		default:
-			// do nothing (unknown color)
-			break;
-	}
-
-	return color;
-}
-
-/**
- * gets color sensor data by RGB
- * Note that this API is valid for only NXT_COLORSENSOR mode.
- * Otherwise, some chunk data is returned
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- * @param rgb: RGB raw data
- */
-void ecrobot_get_nxtcolorsensor_rgb(U8 port_id, S16 rgb[3])
-{
-	rgb[0] = sensor_data[port_id].rgb[0];
-	rgb[1] = sensor_data[port_id].rgb[1];
-	rgb[2] = sensor_data[port_id].rgb[2];
-}
-
-/**
- * terminates NXT Color Sensor.
- * @param port_id: NXT_PORT_S1/NXT_PORT_S2/NXT_PORT_S3/NXT_PORT_S4
- */
-void ecrobot_term_nxtcolorsensor(U8 port_id)
-{
-	colorsensor_term(port_id);
-}
 
 /*==============================================================================
  * RCX Sensors API
@@ -696,29 +497,9 @@ void ecrobot_setDeviceInitialized(void)
 	}
 }
 
-void ecrobot_initDeviceStatus(void)
-{
-	deviceStatus = DEVICE_NO_INIT;
-}
-
 U8 get_device_status()
 {
 	return deviceStatus;
-}
-
-void ecrobot_restart_NXT(void)
-{
-	restart_NXT();
-}
-
-void ecrobot_shutdown_NXT(void)
-{
-	shutdown_NXT();
-}
-
-void ecrobot_exec_NXT_BIOS(void)
-{
-	exec_NXT_BIOS();
 }
 
 /*==============================================================================
@@ -951,10 +732,10 @@ void ecrobot_debug2(UINT var1, UINT var2, UINT var3)
 
 void ecrobot_status_monitor(const CHAR *target_name)
 {
-	display_clear(0);
+    display_clear(0);
 
 	display_goto_xy(0, 0);
-   	display_string(target_name);
+    display_string(target_name);
 
    	display_goto_xy(0, 1);
    	display_string("TIME:");
@@ -968,7 +749,7 @@ void ecrobot_status_monitor(const CHAR *target_name)
    	display_string("REV: ");
    	display_int(nxt_motor_get_count(0), 0);
    	display_int(nxt_motor_get_count(1), 6);
-
+    
    	display_goto_xy(0, 4);
    	display_string("     ");
    	display_int(nxt_motor_get_count(2), 0);
@@ -1048,20 +829,6 @@ void ecrobot_adc_data_monitor(const CHAR *target_name)
 	display_update();
 }
 
-/* This function is used to display user selected signed integer values */
-void ecrobot_sint_var_monitor(SINT vars[16])
-{
-	display_clear(0);
-
-	for (SINT i=0; i<16/2; i++)
-	{
-		display_goto_xy(0, i);
-		display_int(vars[2*i], 8);
-		display_int(vars[2*i+1], 8);
-   	}
-
-	display_update();
-}
 
 /*==============================================================================
  * NXT Sound API
@@ -1126,20 +893,10 @@ SINT ecrobot_sound_wav(const CHAR *file, U32 length, S32 freq, U32 vol)
 	/* read wav data. Currently, supported PCM file types are 
 	 * linear PCM(data chunkID is "data" and "fact") and non-linear PCM.
 	 */
-	if (wav -> fmt.dummy == 0x0000 && wav->data.chunkID == DATA_CHUNK_ID)
+	if (wav->data.chunkID == DATA_CHUNK_ID)
 	{
 		/* linear PCM */
 		sound_play_sample(wav->data.data, wav->data.chunkSize, (U32)freq, vol);
-	}
-	else if (wav -> fmt.dummy != 0x0000)
-	{
-		WAV_ND *wav_nd = (WAV_ND *)file;
-
-		if (wav_nd->data.chunkID == DATA_CHUNK_ID)
-		{
-			/* linear PCM w/o dummy data */
-			sound_play_sample(wav_nd->data.data, wav_nd->data.chunkSize, (U32)freq, vol);
-		}
 	}
 	else
 	{
