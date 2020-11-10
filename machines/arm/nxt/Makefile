@@ -39,7 +39,7 @@ nxt_exception_catch.c
 # The NXT brick is waited for a specific file header which is in the driver files
 SOURCES += nxt_binary_header.s \
 nxt_entry_point.s \
-interrupts.s #\
+interrupts.s \
 ecrobot_init.s \
 irq.s \
 vectors.s \
@@ -76,6 +76,7 @@ nxt_motors.c \
 bt.c \
 display.c \
 sensors.c \
+sensors1.c \
 twi.c \
 nxt_lcd.c \
 nxt_spi.c \
@@ -83,6 +84,8 @@ flashprog.c \
 #udp.c \
 sound.c \
 uart.c \
+data_abort.c \
+hs.c \
 
 TEMP_SOURCE_DIRS += $(MACHINE_PATH)/arm/nxt/drivers
 SOURCES += buttons.c
