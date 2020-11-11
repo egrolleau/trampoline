@@ -84,8 +84,8 @@ sensors1.c \
 twi.c \
 nxt_lcd.c \
 nxt_spi.c \
-flashprog.c
-#udp.c
+flashprog.c \
+udp.c
 
 SOURCES += sound.c \
 uart.c \
