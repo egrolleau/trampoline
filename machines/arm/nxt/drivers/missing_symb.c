@@ -1,6 +1,5 @@
 #include "tpl_os_definitions.h"
 #include "tpl_os.h"
-extern ISR(check_buttons_status);
 extern void i2c_timer_isr_C(void);
 extern void nxt_motor_isr_C(void);
 extern void twi_isr_C(void);
@@ -32,6 +31,9 @@ FUNC(void, OS_CODE) i2c_timer_isr_C_function(void) {
 	i2c_timer_isr_C();
 }
 
+/*extern ISR(check_buttons_status);
+
 ISR(check_buttons_status_function) {
 	CALL(check_buttons_status);
 }
+*/
