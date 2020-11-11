@@ -63,7 +63,7 @@ ecrobot_device_hook.c \
 ecrobot_bluetooth.c \
 colorsensor.c \
 NxtCam.c \
-ecrobot_base.c \
+ecrobot_base.c #\
 ecrobot.c 
 
 TEMP_SOURCE_DIRS += $(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios
