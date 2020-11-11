@@ -82,7 +82,7 @@ twi.c \
 nxt_lcd.c \
 nxt_spi.c \
 flashprog.c \
-udp.c \
+#udp.c \
 sound.c \
 uart.c \
 data_abort.c \
