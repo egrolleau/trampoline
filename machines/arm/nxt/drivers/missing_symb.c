@@ -1,6 +1,7 @@
 #include "tpl_os_definitions.h"
 #include "tpl_os.h"
-#include "buttons.h"
+extern ISR(check_buttons_status);
+extern void i2c_timer_isr_C(void);
 
 FUNC(void, OS_CODE) systick_isr_C_function(void) {
 	systick_isr_C();
