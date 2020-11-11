@@ -40,11 +40,11 @@ nxt_exception_catch.c \
 SOURCES += nxt_binary_header.s \
 nxt_entry_point.s \
 interrupts.s \
-#ecrobot_init.s \
 irq.s \
-vectors.s \
+vectors.s #\
 #init.s \
 #nxt_entry_point.s \
+#ecrobot_init.s \
 
 CFLAGS += -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/c \
 -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios \
