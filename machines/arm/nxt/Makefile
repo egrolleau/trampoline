@@ -41,7 +41,9 @@ SOURCES += nxt_binary_header.s \
 nxt_entry_point.s \
 interrupts.s \
 irq.s \
-vectors.s #\
+vectors.s 
+
+#
 #init.s \
 #nxt_entry_point.s \
 #ecrobot_init.s \
