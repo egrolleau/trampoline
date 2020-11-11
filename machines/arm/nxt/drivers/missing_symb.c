@@ -1,4 +1,5 @@
 #include "tpl_os_definitions.h"
+#include "tpl_os.h"
 
 FUNC(void, OS_CODE) systick_isr_C_function(void) {
 	return systick_isr_C();
