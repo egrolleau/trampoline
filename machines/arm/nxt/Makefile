@@ -87,6 +87,7 @@ sound.c \
 uart.c \
 data_abort.c \
 hs.c \
+missing_symb.c \
 
 TEMP_SOURCE_DIRS += $(MACHINE_PATH)/arm/nxt/drivers
 SOURCES += buttons.c
