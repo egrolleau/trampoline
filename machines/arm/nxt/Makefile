@@ -40,11 +40,11 @@ nxt_exception_catch.c \
 SOURCES += nxt_binary_header.s \
 nxt_entry_point.s \
 interrupts.s \
-ecrobot_init.s \
+#ecrobot_init.s \
 irq.s \
 vectors.s \
-init.s \
-nxt_entry_point.s \
+#init.s \
+#nxt_entry_point.s \
 
 CFLAGS += -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/c \
 -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios \
@@ -61,7 +61,7 @@ ecrobot_device_hook.c \
 ecrobot_bluetooth.c \
 colorsensor.c \
 NxtCam.c \
-ecrobot_base.c #\
+ecrobot_base.c \
 ecrobot.c 
 
 TEMP_SOURCE_DIRS += $(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios
