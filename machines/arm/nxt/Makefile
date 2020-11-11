@@ -33,7 +33,7 @@ nxt_tpl_stubs.c \
 nxt_irq.c \
 nxt_exception_catch.S \
 nxt_bootstrap_stage1.S \
-nxt_exception_catch.c
+nxt_exception_catch.c \
 
 ########
 # The NXT brick is waited for a specific file header which is in the driver files
@@ -44,6 +44,7 @@ ecrobot_init.s \
 irq.s \
 vectors.s \
 init.s \
+nxt_entry_point.s \
 
 CFLAGS += -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/c \
 -I$(MACHINE_PATH)/arm/nxt/drivers/ecrobot/bios \
